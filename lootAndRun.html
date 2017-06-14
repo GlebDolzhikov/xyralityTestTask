@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loot and run)</title>
+    <style>
+        * {
+            font-size: 20px;
+            color: #4a4a4a;
+        }
+    </style>
+    <script>
+        function printLn(str) {
+            const para = document.createElement("P");
+            const t = document.createTextNode(str);
+            para.appendChild(t);
+            document.getElementById('log').appendChild(para);
+        }
+        function onLoad(capacity) {
+            const game = {
+                nextResource(){
+                    if (this.warriorCounter < this.answersMocks.length) {
+                        this.warriorCounter++;
+                        return new Promise((res) => { // async just for fun
+                            setTimeout(() => {
+                                res(this.answersMocks[this.warriorCounter])
+                            }, 70 * this.warriorCounter); // slow bastards
+                        })
+                    }
+                },
+                warriorCounter: -1,
+                answersMocks: [
+                    {id: 7, weight: 120, isEmpty: false},
+                    {id: 0, weight: 230, isEmpty: false},
+                    {id: 3, weight: 250, isEmpty: false},
+                    {id: 2, weight: 75, isEmpty: false},
+                    {id: 9, weight: 5, isEmpty: false},
+                    {id: 4, weight: 400, isEmpty: false},
+                    {id: 6, weight: 10, isEmpty: false},
+                    {id: 8, weight: 180, isEmpty: false},
+                    {id: 5, weight: 50, isEmpty: false},
+                    {id: 1, weight: 100, isEmpty: false},
+                    {isEmpty: true}
+                ],
+                goods: [],
+                getNextResource(callBack){ //async chain fetch
+                    this.nextResource().then(loot => {
+                        this.goods.push(loot);
+                        printLn(`warrior fetch item ${JSON.stringify(loot)}`);
+
+                        if (!loot.isEmpty) {
+                            this.getNextResource(callBack)
+                        } else {
+                            printLn(`warriors fetch all items:`);
+                            printLn(`${JSON.stringify(this.goods)}`);
+                            callBack()
+                        }
+                    })
+                },
+                load(capacity){
+                    let goodsInOxcart = [],
+                        leftedSpace = capacity;
+                    const onFetchGoods = () => {
+                        this.goods
+                            .sort((a, b) => b.weight - a.weight)
+                            .forEach(loot => {
+                                while (leftedSpace >= loot.weight) { //main algorithm takes few rows...
+                                    leftedSpace -= loot.weight;
+
+                                    const oneItemIsLoaded = goodsInOxcart.find(loadedItem => loadedItem.id === loot.id);
+                                    if (oneItemIsLoaded) {
+                                        oneItemIsLoaded.amount++;
+                                    } else {
+                                        goodsInOxcart.push({id: loot.id, amount: 1});
+                                    }
+                                }
+                            });
+
+                        printLn(`oxcart is loaded by: ${JSON.stringify(goodsInOxcart)}`);
+                    };
+                    this.getNextResource(onFetchGoods);
+                }
+            };
+            document.getElementById('log').innerHTML = '';
+            game.load(capacity);
+        }
+    </script>
+</head>
+<body onload="onLoad(115)">
+<h2>Loot and run solution</h2>
+
+<input id="oxcartCapacity" value="115" type="text" placeholder="input custom value">
+<button onclick="onLoad(document.getElementById('oxcartCapacity').value)">go for more</button>
+
+<div id="log"></div>
+</body>
+</html>
